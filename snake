@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@3.11.0/brython.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@3.11.0/brython_stdlib.js"></script>
+    <title>Classic Python Snake</title>
+    <style>
+        body { background-color: #222; color: white; text-align: center; font-family: Arial; }
+        canvas { border: 5px solid #555; background-color: #000; display: block; margin: 20px auto; }
+        .score { font-size: 24px; margin-top: 10px; }
+    </style>
+</head>
+<body onload="brython()">
+    <h1>Classic Snake (Python in Browser)</h1>
+    <div class="score">Score: <span id="score">0</span></div>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <p>Nutze die <b>Pfeiltasten</b> zum Steuern!</p>
+
+    <script type="text/python">
+from browser import document, html, window, timer
+import random
+
+# Initialisierung
+canvas = document["gameCanvas"]
+ctx = canvas.getContext("2d")
+grid_size = 20
+score = 0
+
+snake = [{"x": 100, "y": 100}, {"x": 80, "y": 100}, {"x": 60, "y": 100}]
+food = {"x": 200, "y": 200}
+direction = "RIGHT"
+
+def draw_rect(x, y, color):
+    ctx.fillStyle = color
+    ctx.fillRect(x, y, grid_size - 2, grid_size - 2)
+
+def move_snake():
+    global food, score, direction
+    head = snake[0].copy()
+
+    if direction == "UP": head["y"] -= grid_size
+    elif direction == "DOWN": head["y"] += grid_size
+    elif direction == "LEFT": head["x"] -= grid_size
+    elif direction == "RIGHT": head["x"] += grid_size
+
+    # Kollision mit Wand oder sich selbst
+    if (head["x"] < 0 or head["x"] >= 400 or head["y"] < 0 or head["y"] >= 400 or head in snake):
+        window.alert(f"Game Over! Dein Score: {score}")
+        window.location.reload()
+        return
+
+    snake.insert(0, head)
+
+    # Essen fressen
+    if head["x"] == food["x"] and head["y"] == food["y"]:
+        score += 10
+        document["score"].text = str(score)
+        food = {"x": random.randrange(0, 20) * grid_size, "y": random.randrange(0, 20) * grid_size}
+    else:
+        snake.pop()
+
+    # Zeichnen
+    ctx.clearRect(0, 0, 400, 400)
+    draw_rect(food["x"], food["y"], "red")
+    for segment in snake:
+        draw_rect(segment["x"], segment["y"], "lime")
+
+def on_key_down(event):
+    global direction
+    key = event.keyCode
+    if key == 37 and direction != "RIGHT": direction = "LEFT"
+    elif key == 38 and direction != "DOWN": direction = "UP"
+    elif key == 39 and direction != "LEFT": direction = "RIGHT"
+    elif key == 40 and direction != "UP": direction = "DOWN"
+
+document.bind("keydown", on_key_down)
+timer.set_interval(move_snake, 100)
+    </script>
+</body>
+</html>
